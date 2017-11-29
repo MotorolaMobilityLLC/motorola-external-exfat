@@ -267,13 +267,13 @@ ssize_t exfat_write(struct exfat_dev* dev, const void* buffer, size_t size)
 ssize_t exfat_pread(struct exfat_dev* dev, void* buffer, size_t size,
 		off_t offset)
 {
-	return pread(dev->fd, buffer, size, offset);
+	return pread64(dev->fd, buffer, size, offset);
 }
 
 ssize_t exfat_pwrite(struct exfat_dev* dev, const void* buffer, size_t size,
 		off_t offset)
 {
-	return pwrite(dev->fd, buffer, size, offset);
+	return pwrite64(dev->fd, buffer, size, offset);
 }
 
 ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
