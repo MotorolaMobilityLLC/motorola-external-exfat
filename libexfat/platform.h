@@ -24,7 +24,7 @@
 #ifndef PLATFORM_H_INCLUDED
 #define PLATFORM_H_INCLUDED
 
-#if defined(__linux__) || defined(__GLIBC__) || defined(__GNU__)
+#if defined(__linux__) || defined(__GLIBC__) || defined(__GNU__) || defined(__BIONIC__)
 
 #include <endian.h>
 #include <byteswap.h>
