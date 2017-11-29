@@ -24,6 +24,14 @@
 #ifndef EXFAT_H_INCLUDED
 #define EXFAT_H_INCLUDED
 
+/* Suppress compliation error for new toolchain update of O */
+#if __clang_major__ >= 4
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#pragma clang diagnostic ignored "-Wsign-compare"
+#endif
+
 #include "config.h"
 #include "compiler.h"
 #include "exfatfs.h"
