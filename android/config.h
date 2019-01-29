@@ -20,10 +20,10 @@
 #define PACKAGE_URL "https://github.com/relan/exfat"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.6"
+#define PACKAGE_VERSION "1.2.8"
 
 /* Version number of package */
-#define VERSION "1.2.6"
+#define VERSION "1.2.8"
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE

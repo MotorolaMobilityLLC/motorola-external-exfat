@@ -3,7 +3,7 @@
 	exFAT file system implementation library.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2017  Andrew Nayenko
+	Copyright (C) 2010-2018  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -35,8 +35,9 @@
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
-#endif
+#elif __linux__
 #include <sys/mount.h>
+#endif
 
 struct exfat_dev
 {
@@ -44,6 +45,11 @@ struct exfat_dev
 	enum exfat_mode mode;
 	off_t size; /* in bytes */
 };
+
+static bool is_open(int fd)
+{
+	return fcntl(fd, F_GETFD) != -1;
+}
 
 static int open_ro(const char* spec)
 {
@@ -74,6 +80,24 @@ struct exfat_dev* exfat_open(const char* spec, enum exfat_mode mode)
 {
 	struct exfat_dev* dev;
 	struct stat stbuf;
+
+	/* The system allocates file descriptors sequentially. If we have been
+	   started with stdin (0), stdout (1) or stderr (2) closed, the system
+	   will give us descriptor 0, 1 or 2 later when we open block device,
+	   FUSE communication pipe, etc. As a result, functions using stdin,
+	   stdout or stderr will actually work with a different thing and can
+	   corrupt it. Protect descriptors 0, 1 and 2 from such misuse. */
+	while (!is_open(STDIN_FILENO)
+		|| !is_open(STDOUT_FILENO)
+		|| !is_open(STDERR_FILENO))
+	{
+		/* we don't need those descriptors, let them leak */
+		if (open("/dev/null", O_RDWR) == -1)
+		{
+			exfat_error("failed to open /dev/null");
+			return NULL;
+		}
+	}
 
 	dev = malloc(sizeof(struct exfat_dev));
 	if (dev == NULL)
@@ -289,7 +313,7 @@ ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
 		return 0;
 
 	cluster = exfat_advance_cluster(ef, node, offset / CLUSTER_SIZE(*ef->sb));
-	if (CLUSTER_INVALID(cluster))
+	if (CLUSTER_INVALID(*ef->sb, cluster))
 	{
 		exfat_error("invalid cluster 0x%x while reading", cluster);
 		return -EIO;
@@ -299,7 +323,7 @@ ssize_t exfat_generic_pread(const struct exfat* ef, struct exfat_node* node,
 	remainder = MIN(size, node->size - offset);
 	while (remainder > 0)
 	{
-		if (CLUSTER_INVALID(cluster))
+		if (CLUSTER_INVALID(*ef->sb, cluster))
 		{
 			exfat_error("invalid cluster 0x%x while reading", cluster);
 			return -EIO;
@@ -345,7 +369,7 @@ ssize_t exfat_generic_pwrite(struct exfat* ef, struct exfat_node* node,
 		return 0;
 
 	cluster = exfat_advance_cluster(ef, node, offset / CLUSTER_SIZE(*ef->sb));
-	if (CLUSTER_INVALID(cluster))
+	if (CLUSTER_INVALID(*ef->sb, cluster))
 	{
 		exfat_error("invalid cluster 0x%x while writing", cluster);
 		return -EIO;
@@ -355,7 +379,7 @@ ssize_t exfat_generic_pwrite(struct exfat* ef, struct exfat_node* node,
 	remainder = size;
 	while (remainder > 0)
 	{
-		if (CLUSTER_INVALID(cluster))
+		if (CLUSTER_INVALID(*ef->sb, cluster))
 		{
 			exfat_error("invalid cluster 0x%x while writing", cluster);
 			return -EIO;

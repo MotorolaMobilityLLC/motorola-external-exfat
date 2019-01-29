@@ -4,7 +4,7 @@
 	implementation.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2017  Andrew Nayenko
+	Copyright (C) 2010-2018  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -51,8 +51,8 @@
 
 #define SECTOR_SIZE(sb) (1 << (sb).sector_bits)
 #define CLUSTER_SIZE(sb) (SECTOR_SIZE(sb) << (sb).spc_bits)
-#define CLUSTER_INVALID(c) \
-	((c) < EXFAT_FIRST_DATA_CLUSTER || (c) > EXFAT_LAST_DATA_CLUSTER)
+#define CLUSTER_INVALID(sb, c) ((c) < EXFAT_FIRST_DATA_CLUSTER || \
+	(c) - EXFAT_FIRST_DATA_CLUSTER >= le32_to_cpu((sb).cluster_count))
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -169,7 +169,7 @@ ssize_t exfat_generic_pwrite(struct exfat* ef, struct exfat_node* node,
 int exfat_opendir(struct exfat* ef, struct exfat_node* dir,
 		struct exfat_iterator* it);
 void exfat_closedir(struct exfat* ef, struct exfat_iterator* it);
-struct exfat_node* exfat_readdir(struct exfat* ef, struct exfat_iterator* it);
+struct exfat_node* exfat_readdir(struct exfat_iterator* it);
 int exfat_lookup(struct exfat* ef, struct exfat_node** node,
 		const char* path);
 int exfat_split(struct exfat* ef, struct exfat_node** parent,
