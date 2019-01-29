@@ -3,7 +3,7 @@
 	FUSE-based exFAT implementation. Requires FUSE 2.6 or later.
 
 	Free exFAT implementation.
-	Copyright (C) 2010-2017  Andrew Nayenko
+	Copyright (C) 2010-2018  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -128,7 +128,7 @@ static int fuse_exfat_readdir(const char* path, void* buffer,
 		exfat_error("failed to open directory '%s'", path);
 		return rc;
 	}
-	while ((node = exfat_readdir(&ef, &it)))
+	while ((node = exfat_readdir(&it)))
 	{
 		exfat_get_name(node, name);
 		exfat_debug("[%s] %s: %s, %"PRId64" bytes, cluster 0x%x", __func__,
@@ -528,7 +528,7 @@ int main(int argc, char* argv[])
 			break;
 		case 'V':
 			free(mount_options);
-			puts("Copyright (C) 2010-2017  Andrew Nayenko");
+			puts("Copyright (C) 2010-2018  Andrew Nayenko");
 			return 0;
 		case 'v':
 			break;

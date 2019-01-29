@@ -3,7 +3,7 @@
 	exFAT file system checker.
 
 	Free exFAT implementation.
-	Copyright (C) 2011-2017  Andrew Nayenko
+	Copyright (C) 2011-2018  Andrew Nayenko
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ static int nodeck(struct exfat* ef, struct exfat_node* node)
 
 	while (clusters--)
 	{
-		if (CLUSTER_INVALID(c))
+		if (CLUSTER_INVALID(*ef->sb, c))
 		{
 			char name[EXFAT_UTF8_NAME_BUFFER_MAX];
 
@@ -98,7 +98,7 @@ static void dirck(struct exfat* ef, const char* path)
 		exfat_put_node(ef, parent);
 		return;
 	}
-	while ((node = exfat_readdir(ef, &it)))
+	while ((node = exfat_readdir(&it)))
 	{
 		exfat_get_name(node, entry_path + path_length + 1);
 		exfat_debug("%s: %s, %"PRIu64" bytes, cluster %u", entry_path,
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 		switch (opt)
 		{
 		case 'V':
-			puts("Copyright (C) 2011-2017  Andrew Nayenko");
+			puts("Copyright (C) 2011-2018  Andrew Nayenko");
 			return 0;
 		default:
 			usage(argv[0]);
