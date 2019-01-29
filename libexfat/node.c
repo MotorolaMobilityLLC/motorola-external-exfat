@@ -247,7 +247,7 @@ static bool check_node(const struct exfat_node* node, le16_t actual_checksum,
 	if (node->size == 0 && node->start_cluster != EXFAT_CLUSTER_FREE)
 	{
 		exfat_get_name(node, buffer);
-		exfat_error("'%s' is empty but start cluster is %#x", buffer,
+		exfat_warn("'%s' is empty but start cluster is %#x", buffer,
 				node->start_cluster);
 		ret = false;
 	}
@@ -263,7 +263,7 @@ static bool check_node(const struct exfat_node* node, le16_t actual_checksum,
 	if (node->size == 0 && node->is_contiguous)
 	{
 		exfat_get_name(node, buffer);
-		exfat_error("'%s' is empty but marked as contiguous (%#hx)", buffer,
+		exfat_warn("'%s' is empty but marked as contiguous (%#hx)", buffer,
 				node->attrib);
 		ret = false;
 	}
