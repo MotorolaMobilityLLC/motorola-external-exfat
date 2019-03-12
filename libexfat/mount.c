@@ -103,15 +103,28 @@ static void parse_options(struct exfat* ef, const char* options)
 	ef->gid = get_int_option(options, "gid", 10, getegid());
 
 	ef->noatime = match_option(options, "noatime");
+
+	switch (get_int_option(options, "repair", 10, 0))
+	{
+	case 1:
+		ef->repair = EXFAT_REPAIR_ASK;
+		break;
+	case 2:
+		ef->repair = EXFAT_REPAIR_YES;
+		break;
+	default:
+		ef->repair = EXFAT_REPAIR_NO;
+		break;
+	}
 }
 
-static bool verify_vbr_checksum(struct exfat_dev* dev, void* sector,
-		off_t sector_size)
+static bool verify_vbr_checksum(const struct exfat* ef, void* sector)
 {
+	off_t sector_size = SECTOR_SIZE(*ef->sb);
 	uint32_t vbr_checksum;
 	int i;
 
-	if (exfat_pread(dev, sector, sector_size, 0) < 0)
+	if (exfat_pread(ef->dev, sector, sector_size, 0) < 0)
 	{
 		exfat_error("failed to read boot sector");
 		return false;
@@ -119,7 +132,7 @@ static bool verify_vbr_checksum(struct exfat_dev* dev, void* sector,
 	vbr_checksum = exfat_vbr_start_checksum(sector, sector_size);
 	for (i = 1; i < 11; i++)
 	{
-		if (exfat_pread(dev, sector, sector_size, i * sector_size) < 0)
+		if (exfat_pread(ef->dev, sector, sector_size, i * sector_size) < 0)
 		{
 			exfat_error("failed to read VBR sector");
 			return false;
@@ -127,7 +140,7 @@ static bool verify_vbr_checksum(struct exfat_dev* dev, void* sector,
 		vbr_checksum = exfat_vbr_add_checksum(sector, sector_size,
 				vbr_checksum);
 	}
-	if (exfat_pread(dev, sector, sector_size, i * sector_size) < 0)
+	if (exfat_pread(ef->dev, sector, sector_size, i * sector_size) < 0)
 	{
 		exfat_error("failed to read VBR checksum sector");
 		return false;
@@ -137,7 +150,8 @@ static bool verify_vbr_checksum(struct exfat_dev* dev, void* sector,
 		{
 			exfat_error("invalid VBR checksum 0x%x (expected 0x%x)",
 					le32_to_cpu(((const le32_t*) sector)[i]), vbr_checksum);
-			return false;
+			if (!EXFAT_REPAIR(invalid_vbr_checksum, ef, sector, vbr_checksum))
+				return false;
 		}
 	return true;
 }
@@ -252,7 +266,7 @@ int exfat_mount(struct exfat* ef, const char* spec, const char* options)
 		return -ENOMEM;
 	}
 	/* use zero_cluster as a temporary buffer for VBR checksum verification */
-	if (!verify_vbr_checksum(ef->dev, ef->zero_cluster, SECTOR_SIZE(*ef->sb)))
+	if (!verify_vbr_checksum(ef, ef->zero_cluster))
 	{
 		exfat_free(ef);
 		return -EIO;
