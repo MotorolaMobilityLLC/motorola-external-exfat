@@ -114,37 +114,66 @@ static void dirck(struct exfat* ef, const char* path)
 			files_count++;
 			nodeck(ef, node);
 		}
+		exfat_flush_node(ef, node);
 		exfat_put_node(ef, node);
 	}
 	exfat_closedir(ef, &it);
+	exfat_flush_node(ef, parent);
 	exfat_put_node(ef, parent);
 	free(entry_path);
 }
 
-static void fsck(struct exfat* ef)
+static void fsck(struct exfat* ef, const char* spec, const char* options)
 {
+	if (exfat_mount(ef, spec, options) != 0)
+	{
+		fputs("File system checking stopped. ", stdout);
+		return;
+	}
+
 	exfat_print_info(ef->sb, exfat_count_free_clusters(ef));
 	dirck(ef, "");
+	exfat_unmount(ef);
+
+	printf("Totally %"PRIu64" directories and %"PRIu64" files.\n",
+			directories_count, files_count);
+	fputs("File system checking finished. ", stdout);
 }
 
 static void usage(const char* prog)
 {
-	fprintf(stderr, "Usage: %s [-V] <device>\n", prog);
+	fprintf(stderr, "Usage: %s [-a | -n | -p | -y] <device>\n", prog);
+	fprintf(stderr, "       %s -V\n", prog);
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
 	int opt;
+	const char* options;
 	const char* spec = NULL;
 	struct exfat ef;
 
 	printf("exfatfsck %s\n", VERSION);
 
-	while ((opt = getopt(argc, argv, "V")) != -1)
+	if (isatty(STDIN_FILENO))
+		options = "repair=1";
+	else
+		options = "repair=0";
+
+	while ((opt = getopt(argc, argv, "anpVy")) != -1)
 	{
 		switch (opt)
 		{
+		case 'a':
+		case 'p':
+		case 'y':
+			options = "repair=2";
+			printf("Checking file system options %s.\n", options);
+			break;
+		case 'n':
+			options = "repair=0,ro";
+			break;
 		case 'V':
 			puts("Copyright (C) 2011-2018  Andrew Nayenko");
 			return 0;
@@ -157,19 +186,12 @@ int main(int argc, char* argv[])
 		usage(argv[0]);
 	spec = argv[optind];
 
-	if (exfat_mount(&ef, spec, "ro") != 0)
-		return 1;
-
 	printf("Checking file system on %s.\n", spec);
-	fsck(&ef);
-	exfat_unmount(&ef);
-	printf("Totally %"PRIu64" directories and %"PRIu64" files.\n",
-			directories_count, files_count);
-
-	fputs("File system checking finished. ", stdout);
+	fsck(&ef, spec, options);
 	if (exfat_errors != 0)
 	{
-		printf("ERRORS FOUND: %d.\n", exfat_errors);
+		printf("ERRORS FOUND: %d, FIXED: %d.\n",
+				exfat_errors, exfat_errors_fixed);
 		return 1;
 	}
 	puts("No errors found.");

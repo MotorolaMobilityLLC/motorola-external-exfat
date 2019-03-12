@@ -34,7 +34,8 @@ libexfat_src_files := \
     libexfat/node.c \
     libexfat/time.c \
     libexfat/utf.c \
-    libexfat/utils.c
+    libexfat/utils.c \
+    libexfat/repair.c
 
 libexfat_headers := \
     $(LOCAL_PATH)/android \

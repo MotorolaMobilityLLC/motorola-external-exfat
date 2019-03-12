@@ -69,6 +69,9 @@
 #define BMAP_CLR(bitmap, index) \
 	((bitmap)[BMAP_BLOCK(index)] &= ~BMAP_MASK(index))
 
+#define EXFAT_REPAIR(hook, ef, ...) \
+	(exfat_ask_to_fix(ef) && exfat_fix_ ## hook(ef, __VA_ARGS__))
+
 /* The size of off_t type must be 64 bits. File systems larger than 2 GB will
    be corrupted with 32-bit off_t. */
 STATIC_ASSERT(sizeof(off_t) == 8);
@@ -127,6 +130,7 @@ struct exfat
 	gid_t gid;
 	int ro;
 	bool noatime;
+	enum { EXFAT_REPAIR_NO, EXFAT_REPAIR_ASK, EXFAT_REPAIR_YES } repair;
 };
 
 /* in-core nodes iterator */
@@ -143,6 +147,7 @@ struct exfat_human_bytes
 };
 
 extern int exfat_errors;
+extern int exfat_errors_fixed;
 
 void exfat_bug(const char* format, ...) PRINTF NORETURN;
 void exfat_error(const char* format, ...) PRINTF;
@@ -232,5 +237,13 @@ time_t exfat_exfat2unix(le16_t date, le16_t time, uint8_t centisec);
 void exfat_unix2exfat(time_t unix_time, le16_t* date, le16_t* time,
 		uint8_t* centisec);
 void exfat_tzset(void);
+
+bool exfat_ask_to_fix(const struct exfat* ef);
+bool exfat_fix_invalid_vbr_checksum(const struct exfat* ef, void* sector,
+		uint32_t vbr_checksum);
+bool exfat_fix_invalid_node_checksum(const struct exfat* ef,
+		struct exfat_node* node);
+bool exfat_fix_unknown_entry(struct exfat* ef, struct exfat_node* dir,
+		const struct exfat_entry* entry, off_t offset);
 
 #endif /* ifndef EXFAT_H_INCLUDED */

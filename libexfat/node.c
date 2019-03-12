@@ -223,7 +223,8 @@ static bool check_node(const struct exfat* ef, struct exfat_node* node,
 		exfat_get_name(node, buffer);
 		exfat_error("'%s' has invalid checksum (%#hx != %#hx)", buffer,
 				le16_to_cpu(actual_checksum), le16_to_cpu(meta1->checksum));
-		ret = false;
+		if (!EXFAT_REPAIR(invalid_node_checksum, ef, node))
+			ret = false;
 	}
 
 	/*
@@ -252,7 +253,8 @@ static bool check_node(const struct exfat* ef, struct exfat_node* node,
 		exfat_get_name(node, buffer);
 		exfat_warn("'%s' is empty but start cluster is %#x", buffer,
 				node->start_cluster);
-		ret = false;
+                //we ignore the empty file check,so return true or will cause fsck not full.
+                ret = true;
 	}
 	if (node->size > 0 && CLUSTER_INVALID(*ef->sb, node->start_cluster))
 	{
@@ -277,7 +279,8 @@ static bool check_node(const struct exfat* ef, struct exfat_node* node,
 		exfat_get_name(node, buffer);
 		exfat_warn("'%s' is empty but marked as contiguous (%#hx)", buffer,
 				node->attrib);
-		ret = false;
+                //we ignore the empty file check,so return true or will cause fsck not full.
+                ret = true;
 	}
 
 	/* Directory size must be aligned on at cluster boundary. */
@@ -516,7 +519,8 @@ static int readdir(struct exfat* ef, struct exfat_node* parent,
 				break; /* deleted entry, ignore it */
 
 			exfat_error("unknown entry type %#hhx", entry.type);
-			return -EIO;
+			if (!EXFAT_REPAIR(unknown_entry, ef, parent, &entry, *offset))
+				return -EIO;
 		}
 		*offset += sizeof(entry);
 	}
