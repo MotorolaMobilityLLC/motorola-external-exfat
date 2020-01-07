@@ -78,6 +78,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := mkfs.exfat
 LOCAL_MODULE_TAGS := optional
+LOCAL_PRODUCT_MODULE := true
 LOCAL_SRC_FILES := $(mkexfatfs_src_files)
 LOCAL_CFLAGS := $(exfat_common_cflags)
 LOCAL_C_INCLUDES := $(mkexfatfs_headers)
@@ -100,6 +101,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := fsck.exfat
 LOCAL_MODULE_TAGS := optional
+LOCAL_PRODUCT_MODULE := true
 LOCAL_SRC_FILES := $(exfatfsck_src_files)
 LOCAL_CFLAGS := $(exfat_common_cflags)
 LOCAL_C_INCLUDES := $(exfatfsck_headers)
@@ -122,6 +124,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := dumpexfat
 LOCAL_MODULE_TAGS := optional
+LOCAL_PRODUCT_MODULE := true
 LOCAL_SRC_FILES := $(dumpexfat_src_files)
 LOCAL_CFLAGS := $(exfat_common_cflags)
 LOCAL_C_INCLUDES := $(dumpexfat_headers)
@@ -144,6 +147,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := exfatlabel
 LOCAL_MODULE_TAGS := optional
+LOCAL_PRODUCT_MODULE := true
 LOCAL_SRC_FILES := $(exfatlabel_src_files)
 LOCAL_CFLAGS := $(exfat_common_cflags)
 LOCAL_C_INCLUDES := $(exfatlabel_headers)
