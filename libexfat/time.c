@@ -66,23 +66,33 @@ time_t exfat_exfat2unix(le16_t date, le16_t time, uint8_t centisec)
 	uint16_t twosec = ntime & 0x1f;      /* 5 bits, 0-29 (2 sec granularity) */
 	uint16_t min    = ntime >> 5 & 0x3f; /* 6 bits, 0-59 */
 	uint16_t hour   = ntime >> 11;       /* 5 bits, 0-23 */
+	unsigned warnings = 0;
 
-	if (day == 0 || month == 0 || month > 12)
+	/* if the data or time is bogus, sanitize it and return something valid */
+	/* the caller can detect that, print more diagnostics, and let the FS work */
+
+	if (day < 1 || day > 31 || month < 1 || month > 12)
 	{
-		exfat_error("bad date %u-%02hu-%02hu",
+		warnings++;
+		exfat_warn("bad date %u-%02hu-%02hu",
 				year + EXFAT_EPOCH_YEAR, month, day);
-		return 0;
+		if (day < 1 || day > 31 ) day = 1;
+		if (month < 1 || month > 12) month = 1;
 	}
 	if (hour > 23 || min > 59 || twosec > 29)
 	{
-		exfat_error("bad time %hu:%02hu:%02u",
+		warnings++;
+		exfat_warn("bad time %hu:%02hu:%02u",
 				hour, min, twosec * 2);
-		return 0;
+		if (hour > 23) hour = 0;
+		if (min > 59) min = 0;
+		if (twosec > 29) twosec = 0;
 	}
 	if (centisec > 199)
 	{
-		exfat_error("bad centiseconds count %hhu", centisec);
-		return 0;
+		warnings++;
+		exfat_warn("bad centiseconds count %hhu", centisec);
+		centisec = 0;
 	}
 
 	/* every 4th year between 1904 and 2096 is leap */
@@ -101,6 +111,9 @@ time_t exfat_exfat2unix(le16_t date, le16_t time, uint8_t centisec)
 
 	/* exFAT stores timestamps in local time, so we correct it to UTC */
 	unix_time += exfat_timezone;
+
+	if (warnings)
+		exfat_warn("returning sanitized time offset: %ld", unix_time);
 
 	return unix_time;
 }
