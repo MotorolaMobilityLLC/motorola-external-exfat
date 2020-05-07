@@ -49,6 +49,9 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libexfat
 LOCAL_MODULE_TAGS := optional
+ifeq (true,$(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),30))
+LOCAL_PRODUCT_MODULE := true
+endif
 LOCAL_SRC_FILES := $(libexfat_src_files)
 LOCAL_CFLAGS := $(exfat_common_cflags)
 LOCAL_C_INCLUDES := $(libexfat_headers)
