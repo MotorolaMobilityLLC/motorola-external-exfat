@@ -153,6 +153,8 @@ int main(int argc, char* argv[])
 	const char* options;
 	const char* spec = NULL;
 	struct exfat ef;
+	exfat_errors = 0;
+	exfat_errors_fixed = 0;
 
 	printf("exfatfsck %s\n", VERSION);
 
@@ -192,7 +194,10 @@ int main(int argc, char* argv[])
 	{
 		printf("ERRORS FOUND: %d, FIXED: %d.\n",
 				exfat_errors, exfat_errors_fixed);
-		return 1;
+		if (exfat_errors != exfat_errors_fixed)
+			return 1;
+		else
+			return 0;
 	}
 	puts("No errors found.");
 	return 0;
