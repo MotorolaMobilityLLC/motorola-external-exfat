@@ -17,7 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-
+ifneq ($(TARGET_USE_EXFATPROGS),true)
 LOCAL_PATH:= $(call my-dir)
 
 exfat_common_cflags := -DHAVE_CONFIG_H -std=gnu99
@@ -158,3 +158,4 @@ LOCAL_STATIC_LIBRARIES := libexfat
 LOCAL_SHARED_LIBRARIES := $(libexfat_shared_libraries)
 
 include $(BUILD_EXECUTABLE)
+endif
